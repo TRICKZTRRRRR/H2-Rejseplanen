@@ -72,7 +72,7 @@ button:hover {
     padding: 0;
     margin: 0;
     background: #fff;
-    border: 1px solid #ccc;
+    /* border: 1px solid #ccc; */
     border-radius: 5px;
     max-height: 150px;
     overflow-y: auto;
