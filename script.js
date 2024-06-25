@@ -1,30 +1,30 @@
-document.getElementById('travel-form').addEventListener('submit', function(event) {
+document.getElementById('travel-form').addEventListener('submit', async function(event) {
     event.preventDefault();
 
     const origin = document.getElementById('origin').value;
     const destination = document.getElementById('destination').value;
 
-    Promise.all([fetchLocation(origin), fetchLocation(destination)])
-        .then(locations => {
-            const [originData, destinationData] = locations;
+    try {
+        const [originData, destinationData] = await Promise.all([fetchLocation(origin), fetchLocation(destination)]);
 
-            if (!originData) {
-                document.getElementById('result').innerText = 'Kunne ikke finde startadressen. Prøv igen.';
-                return;
-            }
-            if (!destinationData) {
-                document.getElementById('result').innerText = 'Kunne ikke finde slutadressen. Prøv igen.';
-                return;
-            }
+        if (!originData) {
+            document.getElementById('result').innerText = 'Kunne ikke finde startadressen. Prøv igen.';
+            return;
+        }
+        if (!destinationData) {
+            document.getElementById('result').innerText = 'Kunne ikke finde slutadressen. Prøv igen.';
+            return;
+        }
 
-            const distance = calculateDistance(originData.coordY, originData.coordX, destinationData.coordY, destinationData.coordX);
-            const price = calculatePrice(distance);
-            document.getElementById('result').innerText = `Afstand: ${distance.toFixed(2)} km, Pris: ${price.toFixed(2)} kr`;
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            document.getElementById('result').innerText = 'Der opstod en fejl. Prøv igen.';
-        });
+        const distance = calculateDistance(originData.coordY, originData.coordX, destinationData.coordY, destinationData.coordX);
+        const price = calculatePrice(distance);
+        const travelTime = calculateTravelTime(distance);
+        
+        document.getElementById('result').innerHTML = `Afstand: ${distance.toFixed(2)} km<br>Pris: ${price.toFixed(2)} kr<br>Rejsetid: ${travelTime}`;
+    } catch (error) {
+        console.error('Error:', error);
+        document.getElementById('result').innerText = 'Der opstod en fejl. Prøv igen.';
+    }
 });
 
 document.getElementById('origin').addEventListener('input', function() {
@@ -35,9 +35,10 @@ document.getElementById('destination').addEventListener('input', function() {
     handleInput(this.value, 'destination-suggestions', setDestination);
 });
 
-function handleInput(value, suggestionsId, callback) {
+async function handleInput(value, suggestionsId, callback) {
     if (value.length > 2) {
-        fetchSuggestions(value).then(suggestions => {
+        try {
+            const suggestions = await fetchSuggestions(value);
             const suggestionsElement = document.getElementById(suggestionsId);
             suggestionsElement.innerHTML = '';
             suggestions.forEach(suggestion => {
@@ -49,7 +50,9 @@ function handleInput(value, suggestionsId, callback) {
                 });
                 suggestionsElement.appendChild(li);
             });
-        });
+        } catch (error) {
+            console.error('Error:', error);
+        }
     } else {
         document.getElementById(suggestionsId).innerHTML = '';
     }
@@ -63,39 +66,38 @@ function setDestination(suggestion) {
     document.getElementById('destination').value = suggestion.name;
 }
 
-function fetchSuggestions(query) {
+async function fetchSuggestions(query) {
     const baseUrl = 'http://xmlopen.rejseplanen.dk/bin/rest.exe/location?input=';
     const format = '&format=json';
     const url = baseUrl + encodeURIComponent(query) + format;
 
-    return fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            if (data.LocationList) {
-                let locations = [];
-                if (data.LocationList.CoordLocation) {
-                    locations = locations.concat(data.LocationList.CoordLocation);
-                }
-                if (data.LocationList.StopLocation) {
-                    locations = locations.concat(data.LocationList.StopLocation);
-                }
-                return locations.map(location => ({
-                    name: location.name,
-                    coordX: parseFloat(location.x) / 1000000,
-                    coordY: parseFloat(location.y) / 1000000
-                }));
+    try {
+        const response = await fetch(url);
+        const data = await response.json();
+        if (data.LocationList) {
+            let locations = [];
+            if (data.LocationList.CoordLocation) {
+                locations = locations.concat(data.LocationList.CoordLocation);
             }
-            return [];
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            return [];
-        });
+            if (data.LocationList.StopLocation) {
+                locations = locations.concat(data.LocationList.StopLocation);
+            }
+            return locations.map(location => ({
+                name: location.name,
+                coordX: parseFloat(location.x) / 1000000,
+                coordY: parseFloat(location.y) / 1000000
+            }));
+        }
+        return [];
+    } catch (error) {
+        console.error('Error:', error);
+        return [];
+    }
 }
 
-function fetchLocation(address) {
-    return fetchSuggestions(address)
-        .then(suggestions => suggestions[0] || null);
+async function fetchLocation(address) {
+    const suggestions = await fetchSuggestions(address);
+    return suggestions[0] || null;
 }
 
 function calculateDistance(lat1, lon1, lat2, lon2) {
@@ -114,4 +116,12 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 function calculatePrice(distance) {
     const pricePerKm = 5; // Example price per kilometer
     return distance * pricePerKm;
+}
+
+function calculateTravelTime(distance) {
+    const averageSpeed = 50; // Average speed in km/h
+    const timeInHours = distance / averageSpeed;
+    const hours = Math.floor(timeInHours);
+    const minutes = Math.round((timeInHours - hours) * 60);
+    return `${hours} timer og ${minutes} minutter`;
 }
