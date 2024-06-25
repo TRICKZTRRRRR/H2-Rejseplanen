@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rejsepris Beregner</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Rejsepris Beregner</h1>
+        <form id="travel-form">
+            <label for="origin">Fra adresse:</label>
+            <input type="text" id="origin" name="origin" required>
+            <ul id="origin-suggestions" class="suggestions"></ul>
+
+            <label for="destination">Til adresse:</label>
+            <input type="text" id="destination" name="destination" required>
+            <ul id="destination-suggestions" class="suggestions"></ul>
+
+            <button type="submit">Beregn Pris</button>
+        </form>
+        <div id="result"></div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
