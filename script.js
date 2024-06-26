@@ -16,11 +16,15 @@ document.getElementById('travel-form').addEventListener('submit', async function
             return;
         }
 
+        const originZone = getZone(originData.coordY, originData.coordX);
+        const destinationZone = getZone(destinationData.coordY, destinationData.coordX);
+        const zoneCount = calculateZones(originZone, destinationZone);
+
+        const price = calculatePrice(zoneCount);
         const distance = calculateDistance(originData.coordY, originData.coordX, destinationData.coordY, destinationData.coordX);
-        const price = calculatePrice(distance);
         const travelTime = calculateTravelTime(distance);
-        
-        document.getElementById('result').innerHTML = `Afstand: ${distance.toFixed(2)} km<br>Pris: ${price.toFixed(2)} kr<br>Rejsetid: ${travelTime}`;
+
+        document.getElementById('result').innerHTML = `Antal zoner: ${zoneCount}<br>Pris: ${price.toFixed(2)} kr<br>Afstand: ${distance.toFixed(2)} km<br>Rejsetid: ${travelTime}`;
     } catch (error) {
         console.error('Error:', error);
         document.getElementById('result').innerText = 'Der opstod en fejl. Prøv igen.';
@@ -113,9 +117,9 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
     return distance;
 }
 
-function calculatePrice(distance) {
-    const pricePerKm = 5; // Example price per kilometer
-    return distance * pricePerKm;
+function calculatePrice(zoneCount) {
+    const pricePerZone = 10; // Example price per zone
+    return zoneCount * pricePerZone;
 }
 
 function calculateTravelTime(distance) {
@@ -124,4 +128,17 @@ function calculateTravelTime(distance) {
     const hours = Math.floor(timeInHours);
     const minutes = Math.round((timeInHours - hours) * 60);
     return `${hours} timer og ${minutes} minutter`;
+}
+
+function getZone(lat, lon) {
+    // This function should determine the zone based on coordinates.
+    // Implementation depends on how zones are defined in your context.
+    // Here is a placeholder for the actual logic.
+    return Math.floor(lat + lon); // Placeholder logic
+}
+
+function calculateZones(originZone, destinationZone) {
+    // This function calculates the number of zones between two zones.
+    // This is a simple placeholder logic. Actual implementation will depend on your specific zone system.
+    return Math.abs(destinationZone - originZone) + 1;
 }
